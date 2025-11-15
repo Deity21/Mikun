@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mikun's Hair Booster • Shop</title>
+  <meta name="description" content="Minimalist, vibrant hair booster & growth oil shop with kits, cart, reviews, and admin panel." />
+
+  <!-- Fonts & libs -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+  <style>
+/* ================= White + Barbie Pink theme ================= */
+:root{
+  /* Brand (Barbie-ish pinks) */
+  --brand:#FF4FB7;         /* main Barbie pink */
+  --brand-2:#FF2FA8;       /* deeper Barbie pink */
+
+  /* Surfaces & text */
+  --bg:#ffffff;
+  --panel:#ffffff;
+  --text:#0f172a;
+  --muted:#6b7280;
+
+  /* State */
+  --danger:#dc2626;
+  --ok:#16a34a;
+
+  /* UI */
+  --shadow:0 14px 38px rgb(255, 255, 255);
+  --radius:18px;
+
+  /* Layout */
+  --sidebar-w:280px;
+
+  /* Accents */
+  --chip:#ffffff;          /* pale pink chip */
+  --line:#ffffff;
+}
+
+/* ===== Base / Reset ===== */
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+html{ -webkit-text-size-adjust:100%; }
+body{
+  margin:0;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  color:var(--text);
+  line-height:1.55;
+  overflow-x:hidden;
+  background:
+    radial-gradient(900px 520px at 14% -10%, rgb(255, 255, 255) 0%, transparent 0%),
+    radial-gradient(900px 520px at 92% 60%, rgb(255, 255, 255) 0%, transparent 0%),
+    #fff;
+}
+a{ color:inherit; text-decoration:none; }
+img{ max-width:100%; height:auto; display:block; }
+
+/* iOS safe-area */
+@supports (padding: max(0px)){
+  body{ padding-bottom:max(0px, env(safe-area-inset-bottom)); }
+}
+
+/* ===== App layout ===== */
+.app{
+  display:grid;
+  grid-template-columns:1fr;                  /* phones: content only */
+  min-height:100vh;
+}
+
+/* Sidebar overlays on small screens, docks on large */
+.sidebar{
+  position:fixed; inset:0 auto 0 0;
+  width:var(--sidebar-w);
+  max-width:88vw;
+  transform:translateX(-100%);
+  transition:transform .35s ease;
+  z-index:999;
+  background:
+    linear-gradient(160deg,#ffffff 0%, #ffffff 55%, #ffffff 100%);
+  border-right:1px solid var(--line);
+  padding:16px;
+  overflow:auto;
+}
+.sidebar.open{ transform:translateX(0); }
+
+.main{
+  padding:clamp(14px, 4vw, 28px);
+  min-height:100vh;
+}
+
+/* Dock the sidebar from 1024px up */
+@media (min-width:1024px){
+  .app{ grid-template-columns: var(--sidebar-w) 1fr; }
+  .sidebar{ position:sticky; top:0; height:100vh; transform:none; }
+}
+
+/* ===== Brand bits ===== */
+.logo{ display:flex; align-items:center; gap:10px; margin:12px 8px 18px; font-weight:800; letter-spacing:.3px; }
+.logo-badge{
+  width:38px; height:38px; border-radius:10px;
+  background:linear-gradient(135deg, var(--brand), var(--brand-2));
+  color:#fff; display:grid; place-items:center; font-weight:900; box-shadow:var(--shadow);
+}
+
+/* ===== Navigation ===== */
+.nav{ display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+.nav a{
+  display:flex; align-items:center; gap:10px;
+  padding:clamp(10px, 2.8vw, 12px) 14px;
+  border-radius:12px;
+  color:#374151;
+  background:#fff;
+  border:1px solid var(--line);
+  min-height:44px;
+}
+.nav a.active,
+.nav a:hover{
+  border-color:rgba(255,47,168,.35);
+  background:linear-gradient(145deg, rgba(255,47,168,.10), rgba(255,79,183,.08));
+  color:#111827;
+}
+
+/* ===== Topbar ===== */
+.topbar{ display:flex; align-items:center; gap:12px; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; }
+.search{ flex:1 1 240px; display:flex; gap:10px; min-width:0; }
+.search input{
+  flex:1; min-width:0;
+  padding:12px 14px; border-radius:12px;
+  background:#fff; border:1px solid var(--line); color:var(--text);
+  min-height:44px;
+}
+.pill{
+  padding:10px 14px; border-radius:999px;
+  border:1px solid var(--line);
+  background:#fff; color:#374151;
+  display:inline-flex; align-items:center; gap:8px; min-height:40px;
+}
+
+/* Show hamburger on phones; you already have the button in HTML */
+.sidebar-toggle{ display:inline-flex; }
+@media (min-width:1024px){ .sidebar-toggle{ display:none; } }
+
+/* ===== Cards & responsive tables ===== */
+.card{
+  background:linear-gradient(180deg, rgba(255,47,168,.06), rgba(255,255,255,.9));
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:clamp(14px, 3.6vw, 18px);
+  box-shadow:var(--shadow);
+}
+.card > table{ width:100%; border-collapse:collapse; }
+.card{ overflow:hidden; }
+.card table{ display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+table th, table td{ padding:10px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap; }
+
+/* ===== Hero ===== */
+.hero{
+  position:relative; overflow:hidden;
+  min-height:clamp(52vh, 64vh, 72vh);
+  display:grid; align-items:center;
+}
+.hero h1{
+  font-size:clamp(28px, 7vw, 56px);
+  line-height:1.08; margin:0 0 12px; letter-spacing:-.02em;
+}
+.hero p{ color:#4b5563; margin:0 0 18px; font-size:clamp(14px, 3.6vw, 16px); }
+.hero::before{
+  content:""; position:absolute; inset:-30%;
+  background:
+    radial-gradient(600px 320px at 10% 20%, rgba(255,79,183,.12), transparent 60%),
+    radial-gradient(600px 320px at 90% 60%, rgba(255,47,168,.10), transparent 60%);
+  z-index:1;
+}
+.hero > *{ position:relative; z-index:2; }
+
+/* ===== Buttons ===== */
+.btn{
+  display:inline-flex; align-items:center; gap:10px;
+  padding:12px 16px; border-radius:12px; min-height:44px;
+  border:1px solid transparent; font-weight:700; cursor:pointer;
+  background:linear-gradient(135deg, var(--brand), var(--brand-2)); color:#fff;
+  box-shadow:0 6px 20px rgba(255, 79, 183,.28);
+}
+.btn[disabled]{ opacity:.6; cursor:not-allowed; }
+.btn.alt{ background:#fff; color:var(--brand); border:1px solid rgba(255,47,168,.35); box-shadow:none; }
+
+/* ===== Product tiles ===== */
+.product{ display:flex; flex-direction:column; gap:10px; }
+.product .thumb{
+  aspect-ratio:4/3; border-radius:14px; overflow:hidden;
+  background:#fff; border:1px dashed rgb(255, 255, 255); position:relative;
+}
+.product .thumb img,
+.thumb img{
+  width:100%; height:100%; object-fit:contain; object-position:center; display:block;
+}
+.badge{
+  position:absolute; top:10px; left:10px; font-size:12px; padding:6px 8px;
+  border-radius:999px; background:#ffe3f3; color:#861b6a; border:1px solid rgba(255,47,168,.35);
+}
+.price{ font-size:clamp(16px, 4.2vw, 18px); font-weight:800; color:#111827; }
+.strike{ color:#9ca3af; text-decoration:line-through; font-weight:500; margin-left:6px; }
+
+/* Placeholder look (for items without image) */
+.placeholder{
+  width:100%; height:100%; display:grid; place-items:center;
+  background:repeating-linear-gradient(45deg, #fff, #fff 14px, #ffeaf6 14px, #ffeaf6 28px);
+  color:#9c1a76; font-weight:700; text-align:center; padding:10px;
+}
+
+/* ===== Grids (fluid) ===== */
+.grid{ display:grid; gap:clamp(12px, 4vw, 18px); }
+.g-2, .g-3, .g-4{ grid-template-columns:1fr; }                   /* phones */
+@media (min-width:480px){
+  .g-2, .g-3, .g-4{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (min-width:768px){
+  .g-3{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+@media (min-width:1024px){
+  .g-4{ grid-template-columns:repeat(4,minmax(0,1fr)); }
+}
+
+/* ===== Footer ===== */
+.footer{
+  display:flex; flex-wrap:wrap; gap:14px; justify-content:space-between;
+  margin-top:48px; padding-top:18px; border-top:1px solid var(--line); color:var(--muted);
+}
+
+/* ===== Overlays / Toast ===== */
+.modal{ position:fixed; inset:0; background:rgba(255,47,168,.10); display:none; align-items:center; justify-content:center; z-index:1000; }
+.toast{
+  position:fixed; bottom:16px; right:16px;
+  padding:12px 14px; border-radius:12px;
+  background:#fff;
+  border:1px solid var(--line); display:none; z-index:1100;
+  box-shadow:var(--shadow);
+}
+
+/* ===== Chips / Status ===== */
+.chip{
+  font-size:14px; padding:8px 12px; border-radius:999px;
+  border:1px solid var(--line); background:#fff; color:#374151;
+  display:inline-flex; align-items:center; gap:6px; min-height:36px;
+}
+.chip.ok{ border-color:rgba(22,163,74,.35); background:rgba(22,163,74,.10); color:#14532d; }
+.chip.no{ border-color:rgba(220,38,38,.35); background:rgba(220,38,38,.10); color:#7f1d1d; }
+
+/* ===== Floating WhatsApp ===== */
+.whatsapp{
+  position:fixed; bottom:20px; left:16px;
+  width:clamp(48px, 12vw, 56px); height:clamp(48px, 12vw, 56px);
+  border-radius:999px; display:grid; place-items:center;
+  background:#25D366; color:#fff; box-shadow:0 10px 20px rgba(0,0,0,.2); z-index:900;
+}
+
+/* ===== Form inputs (light theme) ===== */
+input{
+  width:100%;
+  padding:12px 14px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:#fff;
+  color:var(--text);
+  outline:none;
+}
+input:focus{ border-color:rgba(255,47,168,.5); box-shadow:0 0 0 3px rgba(255,47,168,.15); }
+
+/* ===== Ultra-small phones (≤360px): tighten spacing a bit ===== */
+@media (max-width:360px){
+  :root{ --radius:14px; }
+  .card{ padding:12px; }
+  .nav a{ padding:10px 12px; }
+  .btn{ padding:10px 14px; }
+}
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="logo">
+        <div class="logo-badge">M</div>
+        <div>
+          <div style="font-size:18px">Mikun's</div>
+          <div style="font-size:12px;color:#9aa3b8">Hair Booster Co.</div>
+        </div>
+      </div>
+      <div class="pill" style="display:flex;align-items:center;gap:10px;justify-content:space-between">
+        <span style="color:#aeb5c8">Browse</span>
+        <i class="fa-solid fa-spray-can-sparkles"></i>
+      </div>
+      <nav class="nav" id="nav">
+        <a href="#home" data-route="home" class="active"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="#shop" data-route="shop"><i class="fa-solid fa-bag-shopping"></i> Shop All</a>
+        <a href="#kits" data-route="kits"><i class="fa-solid fa-box-open"></i> Single Kits</a>
+        <a href="#oils" data-route="oils"><i class="fa-solid fa-droplet"></i> Oil Boosters</a>
+        <a href="#cart" data-route="cart"><i class="fa-solid fa-cart-shopping"></i> Cart</a>
+        <a href="#reviews" data-route="reviews"><i class="fa-solid fa-star"></i> Reviews</a>
+        <a href="#login" data-route="login"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+        <a href="#login" data-route="login" id="navSignup"><i class="fa-solid fa-user-plus"></i> Sign up</a>
+      </nav>
+
+      <div style="margin-top:18px" class="card">
+        <div style="font-weight:700;margin-bottom:8px">Filters</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px" id="filters">
+          <button class="chip" data-filter="all">All</button>
+          <button class="chip" data-filter="growth">Growth</button>
+          <button class="chip" data-filter="booster">Booster</button>
+          <button class="chip" data-filter="kit">Kits</button>
+          <button class="chip" data-filter="in-stock">In stock</button>
+          <button class="chip" data-filter="sale">On sale</button>
+        </div>
+      </div>
+      <div style="margin-top:14px;color:#aeb5c8;font-size:12px">© <span id="year"></span> Mikun's Hair Booster • Built with ❤</div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main" id="main">
+      <div class="topbar">
+        <button class="pill sidebar-toggle" id="openSidebar"><i class="fa-solid fa-bars"></i></button>
+        <div class="search">
+          <input type="search" id="search" placeholder="Search hair oils, kits, boosters…"/>
+          <button class="btn alt" id="clearSearch"><i class="fa-solid fa-xmark"></i> Clear</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <a href="#cart" class="pill" style="display:inline-flex;align-items:center;gap:8px"><i class="fa-solid fa-cart-shopping"></i><span id="cartCount">0</span></a>
+          <a href="#login" class="pill" id="userPill"><i class="fa-regular fa-user"></i> <span id="userLabel">Guest</span></a>
+        </div>
+      </div>
+
+      <!-- ROUTES -->
+      <section id="view-home" class="route">
+        <div class="hero card" data-aos="fade-up">
+          <div style="position:absolute; inset:-30%; background:
+            radial-gradient(600px 320px at 10% 20%, rgb(255, 255, 255), transparent 60%),
+            radial-gradient(600px 320px at 90% 60%, rgb(255, 255, 255), transparent 60%);">
+          </div>
+          <div style="position:relative; z-index:2; max-width:900px">
+            <div class="chip" style="margin-bottom:12px;background:#ffffff;border-color:rgba(255,47,168,.35);color:#861b6a">New formula • Clinically tested</div>
+            <h1 class="animate__animated animate__fadeInUp">Long and full hair in 2–4 weeks.</h1>
+            <p>Cold-pressed botanicals and peptide boosters designed for all hair types. No parabens, no silicones—just results.</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <a class="btn" href="#shop"><i class="fa-solid fa-bolt"></i> Shop bestsellers</a>
+              <a class="btn alt" href="#reviews"><i class="fa-regular fa-star"></i> See results</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid g-3" style="margin-top:18px">
+          <div class="card" data-aos="zoom-in">
+            <div style="font-weight:800;font-size:22px">Dermatologist-loved</div>
+            <p style="color:#6b7280">Formulas powered by rosemary, caffeine, biotin and copper peptides to energize follicles.</p>
+          </div>
+          <div class="card" data-aos="zoom-in" data-aos-delay="80">
+            <div style="font-weight:800;font-size:22px">No grease, no itch</div>
+            <p style="color:#6b7280">Lightweight base absorbs fast—style as usual without residue.</p>
+          </div>
+          <div class="card" data-aos="zoom-in" data-aos-delay="120">
+            <div style="font-weight:800;font-size:22px">Visible in weeks</div>
+            <p style="color:#6b7280">Thousands of happy customers. Upload your review from your account.</p>
+          </div>
+        </div>
+
+        <h2 style="margin:26px 8px 10px">Trending now</h2>
+        <div class="grid g-4" id="trendingGrid"></div>
+      </section>
+
+      <section id="view-shop" class="route" style="display:none">
+        <h2>Shop All</h2>
+        <div class="grid g-4" id="shopGrid"></div>
+      </section>
+
+      <section id="view-kits" class="route" style="display:none">
+        <h2>Single Kits</h2>
+        <div class="grid g-4" id="kitsGrid"></div>
+      </section>
+
+      <section id="view-oils" class="route" style="display:none">
+        <h2>Oil Boosters</h2>
+        <div class="grid g-4" id="oilsGrid"></div>
+      </section>
+
+      <section id="view-cart" class="route" style="display:none">
+        <h2>Cart</h2>
+        <div class="grid g-3">
+          <div class="card">
+            <table>
+              <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th></th></tr></thead>
+              <tbody id="cartTable"></tbody>
+            </table>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+              <div>
+                <div>Subtotal: <strong id="subtotal">₦0</strong></div>
+                <div style="font-size:12px;color:#6b7280">Shipping calculated at checkout.</div>
+              </div>
+              <div style="display:flex;gap:10px">
+                <button class="btn alt" id="clearCart"><i class="fa-solid fa-trash"></i> Clear</button>
+                <button class="btn" id="checkout"><i class="fa-solid fa-lock"></i> Checkout</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Delivery details</h3>
+            <label>Full name</label>
+            <input id="shipName" placeholder="Jane Doe"/>
+            <label style="margin-top:8px">Email</label>
+            <input id="shipEmail" type="email" placeholder="jane@example.com"/>
+            <label style="margin-top:8px">Phone</label>
+            <input id="shipPhone" placeholder="0803 000 0000"/>
+            <label style="margin-top:8px">Address</label>
+            <input id="shipAddress" placeholder="12 Admiralty Way, Lekki, Lagos"/>
+          </div>
+          <div class="card">
+            <h3>Notes</h3>
+            <input id="orderNotes" placeholder="Drop-off notes or special requests"/>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-reviews" class="route" style="display:none">
+        <h2>Customer Reviews</h2>
+        <div class="grid g-3" id="reviewsGrid"></div>
+      </section>
+
+      <section id="view-login" class="route" style="display:none">
+        <div class="grid g-2">
+          <div class="card">
+            <h3>Login</h3>
+            <label>Email</label>
+            <input id="loginEmail" type="email" placeholder="you@example.com" autocomplete="email"/>
+            <label style="margin-top:8px">Password</label>
+            <input id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password"/>
+            <div style="margin-top:12px;display:flex;gap:10px">
+              <button class="btn" id="loginBtn"><i class="fa-solid fa-right-to-bracket"></i> Login</button>
+              <button class="btn alt" id="revealSignup"><i class="fa-solid fa-user-plus"></i> Create account</button>
+            </div>
+          </div>
+
+          <div class="card" id="loginSignupCard" style="display:none">
+            <h3>Create your account</h3>
+            <label>Full name</label>
+            <input id="supName" placeholder="Full name"/>
+            <label style="margin-top:8px">Email</label>
+            <input id="supEmail" type="email" placeholder="you@example.com" autocomplete="email"/>
+            <label style="margin-top:8px">Password</label>
+            <input id="supPassword" type="password" placeholder="••••••••" autocomplete="new-password"/>
+            <div style="margin-top:12px">
+              <button class="btn" id="signupBtn2"><i class="fa-solid fa-user-plus"></i> Create account</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-admin" class="route" style="display:none">
+        <div class="grid g-3">
+          <div class="card" id="adminGate" style="display:block">
+            <h3>Admin Dashboard</h3>
+            <p style="color:#6b7280">Only administrators can view this page. Please <a href="#login" class="chip">log in</a> with an admin account.</p>
+            <div style="margin-top:8px"><span class="chip">Tip</span> Use the same Login form. If your user has the admin role, the dashboard will unlock automatically.</div>
+          </div>
+
+          <div class="card" id="adminPanel" style="display:none">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <h3>Dashboard</h3>
+              <div style="display:flex;gap:8px">
+                <button class="chip" id="exportCSV"><i class="fa-solid fa-file-export"></i> Export CSV</button>
+                <button class="chip" id="logoutAdmin"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</button>
+              </div>
+            </div>
+
+            <div class="grid g-3" style="margin-top:10px">
+              <div class="card"><div style="font-size:12px;color:#6b7280">Total sales</div><div style="font-size:28px;font-weight:800" id="mSales">₦0</div></div>
+              <div class="card"><div style="font-size:12px;color:#6b7280">Users</div><div style="font-size:28px;font-weight:800" id="mUsers">0</div></div>
+              <div class="card"><div style="font-size:12px;color:#6b7280">Products</div><div style="font-size:28px;font-weight:800" id="mProducts">0</div></div>
+            </div>
+
+            <h4 style="margin:16px 0 6px">Products</h4>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+              <input id="pName" placeholder="Name">
+              <input id="pPrice" placeholder="Price (NGN)" type="number">
+              <input id="pType" placeholder="Type (growth/booster/kit)">
+              <label class="chip" style="cursor:pointer">
+                <input id="pImgFile" type="file" accept="image/*" style="display:none"> Upload image
+              </label>
+              <label class="chip"><input id="pStock" type="checkbox" checked style="margin-right:8px"> In stock</label>
+              <button class="btn" id="addProduct"><i class="fa-solid fa-plus"></i> Add</button>
+            </div>
+            <table>
+              <thead><tr><th>Name</th><th>Type</th><th>Price</th><th>Stock</th><th></th></tr></thead>
+              <tbody id="adminProducts"></tbody>
+            </table>
+
+            <h4 style="margin:16px 0 6px">Orders</h4>
+            <table>
+              <thead><tr><th>#</th><th>Customer</th><th>Items</th><th>Total</th><th>Date</th></tr></thead>
+              <tbody id="adminOrders"></tbody>
+            </table>
+
+            <h4 style="margin:16px 0 6px">Users</h4>
+            <table>
+              <thead><tr><th>Name</th><th>Email</th><th>Joined</th></tr></thead>
+              <tbody id="adminUsers"></tbody>
+            </table>
+
+            <h4 style="margin:16px 0 6px">Reviews</h4>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+              <input id="rAuthor" placeholder="Author">
+              <input id="rText" placeholder="Review text">
+              <input id="rStars" type="number" min="1" max="5" value="5">
+              <label class="chip" style="cursor:pointer">
+                <input id="rImgFile" type="file" accept="image/*" style="display:none"> Upload photo
+              </label>
+              <button class="btn" id="addReview"><i class="fa-solid fa-star"></i> Add Review</button>
+            </div>
+            <table>
+              <thead><tr><th>Author</th><th>Stars</th><th>Text</th><th></th></tr></thead>
+              <tbody id="adminReviews"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <div class="footer" id="footer">
+        <div>Mikun • Ships worldwide</div>
+        <div style="display:flex;gap:12px;align-items:center">
+          <a class="chip" href="#privacy">Privacy</a>
+          <a class="chip" href="#terms">Terms</a>
+          <a class="chip" href="mailto:Misturahalao28@gmail.com"><i class="fa-regular fa-envelope"></i> Misturahalao28@gmail.com</a>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- WhatsApp FAB -->
+  <a class="whatsapp" id="whatsappBtn" target="_blank" aria-label="Chat on WhatsApp"><i class="fa-brands fa-whatsapp" style="font-size:28px"></i></a>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+  <script>
+// ========= Helper utilities
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const money = n => `₦${(+n).toLocaleString()}`;
+const toast = (msg) => {
+  const t = $('#toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 2000);
+};
+const randomId = () => {
+  try {
+    return (crypto && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+          const r = Math.random()*16|0, v = c==='x' ? r : (r&0x3|0x8);
+          return v.toString(16);
+        });
+  } catch {
+    return String(Date.now()) + Math.random().toString(16).slice(2);
+  }
+};
+
+// ========= Product placeholders you can edit directly =========
+// If img is "", a styled placeholder tile is shown automatically.
+const PRODUCT_PLACEHOLDERS = [
+  {id:null, name:'50ml Fast Hair Growth Oil',   type:'growth',  img:'1.jpg', price:4500, compareAt:null,   stock:true,  featured:true},
+  {id:null, name:'100ml Fast Hair Growth Oil',type:'booster', img:'2.jpg', price:8000, compareAt:null,   stock:true,  featured:false},
+  {id:null, name:'Big Fast Hair Growth Cream',   type:'growth',     img:'3.jpg', price:4000, compareAt:null,  stock:true,  featured:true},
+  {id:null, name:'50ml Oil With Fast Hair Growth Cream Set Combo',   type:'growth',  img:'5.jpg', price:10500,  compareAt:null,   stock:true,  featured:false},
+  {id:null, name:'Full kit ',   type:'kit',  img:'8.jpg', price:39000, compareAt:null,   stock:true,  featured:true},
+  {id:null, name:'Full Kit With 4 Hair Care Set ',type:'kit', img:'9.jpg', price:50000, compareAt:null,   stock:true,  featured:false},
+  {id:null, name:'Herbal Hair Mint Spray',   type:'growth',     img:'10.jpg', price:4000, compareAt:null,  stock:true,  featured:true},
+  {id:null, name:'Natural Curated Shampoo',   type:'growth',  img:'11.jpg', price:10500,  compareAt:null,   stock:true,  featured:false},
+  {id:null, name:'Mentholated Conditioner ',   type:'grwoth',  img:'12.jpg', price:4000, compareAt:null,   stock:true,  featured:true},
+  {id:null, name:'Daily Leave In Conditioner ',type:'grwoth', img:'13.jpg', price:9000, compareAt:null,   stock:true,  featured:false},
+  {id:null, name:'Deep In Conditioner',   type:'growth',     img:'14.jpg', price:3500, compareAt:null,  stock:true,  featured:true},
+  {id:null, name:'Scalp Massager',   type:'growth',  img:'15.jpg', price:4000,  compareAt:null,   stock:true,  featured:false},
+  {id:null, name:'Applicator Bottle',   type:'grwoth',  img:'16.jpg', price:4000, compareAt:null,   stock:true,  featured:true},
+  {id:null, name:'Spray Bottle ',type:'grwoth', img:'17.jpg', price:3000, compareAt:null,   stock:true,  featured:false},
+  {id:null, name:'Perfect Big Wide Tooth Comb For Growth ',   type:'growth',     img:'18.jpg', price:3000, compareAt:null,  stock:true,  featured:true},
+  {id:null, name:'4 Hair Care Tools',   type:'growth',  img:'19.jpg', price:13000,  compareAt:null,   stock:true,  featured:false}
+];
+
+// ========= State (LocalStorage)
+const DB = {
+  get products(){ return JSON.parse(localStorage.getItem('av_products')||'[]') },
+  set products(v){ localStorage.setItem('av_products', JSON.stringify(v)) },
+  get users(){ return JSON.parse(localStorage.getItem('av_users')||'[]') },
+  set users(v){ localStorage.setItem('av_users', JSON.stringify(v)) },
+  get orders(){ return JSON.parse(localStorage.getItem('av_orders')||'[]') },
+  set orders(v){ localStorage.setItem('av_orders', JSON.stringify(v)) },
+  get reviews(){ return JSON.parse(localStorage.getItem('av_reviews')||'[]') },
+  set reviews(v){ localStorage.setItem('av_reviews', JSON.stringify(v)) },
+  get cart(){ return JSON.parse(localStorage.getItem('av_cart')||'[]') },
+  set cart(v){ localStorage.setItem('av_cart', JSON.stringify(v)) },
+  get current(){ return JSON.parse(localStorage.getItem('av_current')||'null') },
+  set current(v){ localStorage.setItem('av_current', JSON.stringify(v)) },
+};
+
+// ========= Seed demo data + placeholders (once)
+const seed = () => {
+  if (DB.products.length) return;
+
+  const demo = [
+    {id:randomId(), name:'Fast Hair Growth Oil And Cream Combo Set ', type:'growth',  img:'5.jpg', price:14000, compareAt:null, stock:true,  featured:true},
+    {id:randomId(), name:'Medium Kit', type:'booster', img:'7.jpg', price:28000, compareAt:null,  stock:true,  featured:true},
+    {id:randomId(), name:'Mini Kit',    type:'kit',     img:'6.jpg', price:18000, compareAt:null, stock:true,  featured:true}
+  ];
+
+  const filledPlaceholders = PRODUCT_PLACEHOLDERS.map(p => ({...p, id: randomId()}));
+
+  DB.products = [...demo, ...filledPlaceholders];
+
+  DB.users = [
+    {id:randomId(), name:'Demo User',  email:'demo@aurevia.io',  password:'demo123',    joined:Date.now(), role:'user'},
+    {id:randomId(), name:'Admin User', email:'admin@mikun.io',   password:'mikunadmin', joined:Date.now(), role:'admin'}
+  ];
+
+  DB.reviews = [
+    {id:randomId(), author:'Ada',   stars:5, text:'Edges filling back in 5 weeks. Light scent, not greasy!'},
+    {id:randomId(), author:'Uche',  stars:4, text:'Visible thickness, shipping was fast.'},
+    {id:randomId(), author:'Marie', stars:5, text:'Paired with derma roller, crazy growth.'}
+  ];
+};
+
+// === helpers ===
+const hasImg = (p) => typeof p.img === 'string' && p.img.trim().length > 0;
+
+// ========= Renderers
+const renderProducts = (containerId, filterFn) => {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '';
+
+  const list = DB.products.filter(p => filterFn ? filterFn(p) : true);
+
+  list.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'card product';
+    card.setAttribute('data-aos','fade-up');
+
+    const badgeHTML = p.compareAt
+      ? `<span class="badge">Save ${Math.round(100-(p.price/p.compareAt*100))}%</span>`
+      : '';
+
+    const mediaHTML = hasImg(p)
+      ? `<img src="${p.img}" alt="${p.name}">`
+      : `<div class="placeholder">
+           <div>
+             <div style="font-size:14px;opacity:.8">Placeholder</div>
+             <div style="font-size:16px">${p.name || 'Your Product'}</div>
+             <div style="font-size:12px;opacity:.8;margin-top:6px">Add product image</div>
+           </div>
+         </div>`;
+
+    card.innerHTML = `
+      <div class="thumb">
+        ${mediaHTML}
+        ${badgeHTML}
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+        <div>
+          <div style="font-weight:700">${p.name}</div>
+          <div class="price">${money(p.price||0)} ${p.compareAt? `<span class="strike">${money(p.compareAt)}</span>`:''}</div>
+          <div class="chip ${p.stock? 'ok':'no'}" style="margin-top:6px">${p.stock? 'In stock':'Out of stock'}</div>
+        </div>
+        <button class="btn" ${p.stock?'':'disabled'} data-add="${p.id}"><i class="fa-solid fa-plus"></i> Add</button>
+      </div>
+    `;
+    el.appendChild(card);
+  });
+
+  el.querySelectorAll('[data-add]').forEach(btn => btn.onclick = () => addToCart(btn.dataset.add));
+};
+
+const renderCart = () => {
+  const tbody = $('#cartTable'); if (!tbody) return;
+  tbody.innerHTML = '';
+
+  DB.cart.forEach((it,idx) => {
+    const p = DB.products.find(x => x.id===it.id); if(!p) return;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${p.name}</td>
+      <td>
+        <button class="chip" data-minus="${idx}">-</button>
+        <span style="margin:0 8px">${it.qty}</span>
+        <button class="chip" data-plus="${idx}">+</button>
+      </td>
+      <td>${money(p.price*it.qty)}</td>
+      <td><button class="chip" data-del="${idx}"><i class="fa-solid fa-xmark"></i></button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  $('#subtotal').textContent = money(DB.cart.reduce((s,it)=>{
+    const p=DB.products.find(x=>x.id===it.id);
+    return s+(p?p.price*it.qty:0)
+  },0));
+
+  $('#cartCount').textContent = DB.cart.reduce((s,it)=>s+it.qty,0);
+
+  tbody.querySelectorAll('[data-minus]').forEach(b=> b.onclick = ()=> updateQty(+b.dataset.minus, -1));
+  tbody.querySelectorAll('[data-plus]').forEach(b=> b.onclick = ()=> updateQty(+b.dataset.plus, +1));
+  tbody.querySelectorAll('[data-del]').forEach(b=> b.onclick = ()=> delCart(+b.dataset.del));
+};
+
+const renderReviews = () => {
+  const grid = $('#reviewsGrid'); if (!grid) return;
+  grid.innerHTML = '';
+  DB.reviews.forEach(r=>{
+    const c = document.createElement('div'); c.className='card'; c.setAttribute('data-aos','fade-up');
+    c.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px"><i class="fa-solid fa-user-astronaut"></i> <strong>${r.author}</strong></div>
+      <div style="color:#ffcc66;margin:6px 0">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</div>
+      ${r.img ? `<div class="thumb" style="aspect-ratio:4/3;border-radius:12px;overflow:hidden;margin-bottom:8px;border:1px solid var(--line)"><img src="${r.img}" alt="Review photo"></div>` : ''}
+      <p style="color:#475569">${r.text}</p>
+    `;
+    grid.appendChild(c);
+  });
+};
+
+const renderAdmin = () => {
+  $('#mUsers').textContent = DB.users.length;
+  $('#mProducts').textContent = DB.products.length;
+  const total = DB.orders.reduce((s,o)=> s+o.total, 0);
+  $('#mSales').textContent = money(total);
+
+  const pbody = $('#adminProducts'); if (pbody){
+    pbody.innerHTML='';
+    DB.products.forEach((p,i)=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input data-edit-name="${i}" value="${p.name}"></td>
+        <td><input data-edit-type="${i}" value="${p.type}"></td>
+        <td><input data-edit-price="${i}" type="number" value="${p.price}"></td>
+        <td><label class="chip"><input data-edit-stock="${i}" type="checkbox" ${p.stock?'checked':''}> In stock</label></td>
+        <td>
+          <button class="chip" data-save="${i}"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+          <button class="chip" data-delp="${i}"><i class="fa-solid fa-trash"></i></button>
+        </td>
+      `;
+      pbody.appendChild(tr);
+    });
+    pbody.querySelectorAll('[data-save]').forEach(b=> b.onclick = ()=> saveProduct(+b.dataset.save));
+    pbody.querySelectorAll('[data-delp]').forEach(b => {
+      b.onclick = () => {
+        const idx = Number(b.dataset.delp);
+        const list = DB.products;
+        list.splice(idx, 1);
+        DB.products = list;
+        renderAdmin();
+        renderAll();
+        toast('Product deleted');
+      };
+    });
+  }
+
+  const obody = $('#adminOrders'); if (obody){
+    obody.innerHTML='';
+    DB.orders.slice().reverse().forEach((o, idx)=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>#${DB.orders.length - idx}</td>
+        <td>${o.name} <div style="color:#6b7280;font-size:12px">${o.email}</div></td>
+        <td>${o.items.length} items</td>
+        <td>${money(o.total)}</td>
+        <td>${new Date(o.time).toLocaleString()}</td>
+      `;
+      obody.appendChild(tr);
+    });
+  }
+
+  const ubody = $('#adminUsers'); if (ubody){
+    ubody.innerHTML='';
+    DB.users.forEach(u=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${u.name}</td><td>${u.email}</td><td>${new Date(u.joined).toLocaleDateString()}</td>`;
+      ubody.appendChild(tr);
+    });
+  }
+
+  const rbody = $('#adminReviews'); if (rbody){
+    rbody.innerHTML='';
+    DB.reviews.forEach((r,i)=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.author}</td>
+        <td>${r.stars}★</td>
+        <td>${r.text}</td>
+        <td><button class="chip" data-delr="${i}"><i class="fa-solid fa-trash"></i></button></td>
+      `;
+      rbody.appendChild(tr);
+    });
+    rbody.querySelectorAll('[data-delr]').forEach(b=> b.onclick = ()=> {
+      DB.reviews.splice(+b.dataset.delr,1);
+      DB.reviews = [...DB.reviews];
+      renderAll();
+      toast('Review removed');
+    });
+  }
+};
+
+// ========= Cart ops
+const addToCart = (id) => {
+  const idx = DB.cart.findIndex(x=>x.id===id);
+  if (idx>-1) DB.cart[idx].qty += 1;
+  else DB.cart.push({id, qty:1});
+  DB.cart=[...DB.cart];
+  toast('Added to cart');
+  renderCart();
+};
+const updateQty = (idx, delta) => {
+  DB.cart[idx].qty = Math.max(1, DB.cart[idx].qty + delta);
+  DB.cart=[...DB.cart];
+  renderCart();
+};
+const delCart = (idx) => {
+  DB.cart.splice(idx,1);
+  DB.cart=[...DB.cart];
+  renderCart();
+};
+
+// ========= Auth
+const signup = (name,email,password) => {
+  if(!name||!email||!password) return toast('Please fill all fields');
+  if(DB.users.some(u=>u.email===email)) return toast('Email already exists');
+  DB.users = [...DB.users, {id:randomId(), name, email, password, joined:Date.now(), role:'user'}];
+  DB.current = {email};
+  updateUserPill();
+  toast('Account created');
+  location.hash = '#home';
+};
+
+const login = (email,password) => {
+  const u = DB.users.find(u=>u.email===email && u.password===password);
+  if(!u) return toast('Invalid credentials');
+  DB.current = {email};
+  updateUserPill();
+  toast(`Welcome back${u.role==='admin' ? ', Admin' : ''}`);
+  location.hash = u.role==='admin' ? '#admin' : '#home';
+  show(u.role==='admin' ? 'admin' : 'home');
+};
+
+const updateUserPill = () => {
+  const u = DB.current ? DB.users.find(x=>x.email===DB.current.email) : null;
+  const label = u ? (u.name?.split(' ')[0]||'User') : 'Guest';
+  const pill = $('#userLabel');
+  if (pill) pill.textContent = label;
+  const up = $('#userPill');
+  if (up) up.href = DB.current ? '#account' : '#login';
+};
+
+// ========= Checkout (guard external libs)
+(() => { try { if (window.emailjs) emailjs.init({ publicKey: 'YOUR_EMAILJS_PUBLIC_KEY' }); } catch (e){} })();
+
+const checkout = () => {
+  if(DB.cart.length===0) return toast('Your cart is empty');
+  const name   = $('#shipName')?.value?.trim();
+  const email  = $('#shipEmail')?.value?.trim();
+  const phone  = $('#shipPhone')?.value?.trim();
+  const address= $('#shipAddress')?.value?.trim();
+  if(!name||!email||!phone||!address) return toast('Please fill delivery details');
+
+  const amount = DB.cart.reduce((s,it)=>{
+    const p=DB.products.find(x=>x.id===it.id);
+    return s + (p?p.price*it.qty:0);
+  },0);
+
+  if (!window.PaystackPop) { toast('Payment lib missing'); return; }
+
+  const handler = PaystackPop.setup({
+    key:'pk_live_ba580dd3ff1099056c22c54e68a3b80bc48b7772',
+    email,
+    amount: amount*100,
+    currency:'NGN',
+    metadata:{
+      custom_fields:[
+        {display_name:'Customer', variable_name:'customer_name', value:name},
+        {display_name:'Phone',    variable_name:'phone',         value:phone},
+        {display_name:'Address',  variable_name:'address',       value:address}
+      ]
+    },
+    callback: function(response){
+      const order = {
+        id:response.reference,
+        items:[...DB.cart],
+        total:amount,
+        name, email, phone, address,
+        notes: $('#orderNotes')?.value,
+        time: Date.now()
+      };
+      DB.orders = [...DB.orders, order];
+      DB.cart = [];
+      renderCart();
+
+      if (window.emailjs) {
+        emailjs.send('service_d9rw1md','template_oz1o818',{
+          order_id: order.id,
+          amount: money(order.total),
+          customer_name: name,
+          customer_email: email,
+          phone, address,
+          items: order.items.map(it=>{
+            const p=DB.products.find(x=>x.id===it.id);
+            return `${p?.name} x${it.qty}`;
+          }).join(', '),
+          notes: order.notes || '-'
+        });
+      }
+      toast('Payment successful. Receipt sent to email.');
+      location.hash = '#home';
+    },
+    onClose: function(){ toast('Payment window closed'); }
+  });
+  handler.openIframe();
+};
+
+// ========= Search & filters
+let currentFilter = 'all';
+const applySearch = () => {
+  const q = ($('#search')?.value || '').toLowerCase();
+  const filt = currentFilter;
+  const f = p => (p.name.toLowerCase().includes(q)) &&
+                 ((filt==='all') || (filt==='in-stock' && p.stock) || (filt==='sale' && p.compareAt) || p.type===filt || (filt==='kit' && p.type==='kit'));
+  renderProducts('shopGrid', f);
+  renderProducts('oilsGrid', p=> f(p) && p.type!=='kit');
+  renderProducts('kitsGrid', p=> f(p) && p.type==='kit');
+};
+
+// ========= Router
+const routes = ['home','shop','kits','oils','cart','reviews','login','admin'];
+
+const show = (name) => {
+  if (!routes.includes(name) || !document.getElementById('view-'+name)) name='home';
+  $$('.route').forEach(v=> v.style.display='none');
+  const view = document.getElementById('view-'+name);
+  if (view) view.style.display='block';
+  $$('#nav a').forEach(a=> a.classList.toggle('active', a.dataset.route===name));
+
+  if(name==='shop'||name==='oils'||name==='kits') applySearch();
+  if(name==='cart') renderCart();
+  if(name==='reviews') renderReviews();
+  if(name==='admin'){
+    const u = DB.current ? DB.users.find(x=>x.email===DB.current.email) : null;
+    const isAdmin = !!(u && u.role==='admin');
+    const gate = $('#adminGate'), panel = $('#adminPanel');
+    if (gate)  gate.style.display  = isAdmin ? 'none' : 'block';
+    if (panel) panel.style.display = isAdmin ? 'block' : 'none';
+    if(isAdmin) renderAdmin();
+  }
+  if (window.AOS?.refresh) AOS.refresh();
+  window.scrollTo({top:0,behavior:'smooth'});
+};
+
+// ========= Save edits from admin table
+const saveProduct = (i) => {
+  const list = DB.products;
+  const name = document.querySelector(`[data-edit-name="${i}"]`)?.value ?? list[i].name;
+  const type = document.querySelector(`[data-edit-type="${i}"]`)?.value ?? list[i].type;
+  const price= +document.querySelector(`[data-edit-price="${i}"]`)?.value ?? list[i].price;
+  const stock= document.querySelector(`[data-edit-stock="${i}"]`)?.checked ?? list[i].stock;
+  list[i] = {...list[i], name, type, price, stock};
+  DB.products = list;
+  renderAll();
+  toast('Saved');
+};
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  seed();
+
+
+  $('#nav')?.addEventListener('click', (e)=>{
+    const a = e.target.closest('a[data-route]');
+    if(!a) return;
+    e.preventDefault();
+    const route = a.dataset.route;
+    if (location.hash !== '#'+route) location.hash = '#'+route;
+    show(route);
+    $('#sidebar')?.classList.remove('open');
+  });
+
+  window.addEventListener('hashchange', ()=>{
+    const name = location.hash.replace('#','')||'home';
+    show(routes.includes(name)? name : 'home');
+  });
+
+  
+  $('#openSidebar')?.addEventListener('click', ()=> $('#sidebar')?.classList.toggle('open'));
+  $('#clearSearch')?.addEventListener('click', ()=>{ const s=$('#search'); if (s) s.value=''; applySearch(); });
+  $('#search')?.addEventListener('input', ()=>{
+    if (location.hash !== '#shop') location.hash = '#shop';
+    applySearch();
+  });
+  $('#filters')?.addEventListener('click', e=>{
+    const btn = e.target.closest('button[data-filter]'); if(!btn) return;
+    currentFilter = btn.dataset.filter;
+    $$('#filters .chip').forEach(c=> c.classList.remove('ok'));
+    btn.classList.add('ok');
+    applySearch();
+  });
+
+
+  $('#revealSignup')?.addEventListener('click', ()=> { const c=$('#loginSignupCard'); if (c) c.style.display='block'; });
+  $('#navSignup')?.addEventListener('click', ()=> setTimeout(()=> {
+    location.hash='#login'; show('login');
+    const c=$('#loginSignupCard'); if (c) c.style.display='block';
+  }, 0));
+  $('#signupBtn2')?.addEventListener('click', ()=> signup($('#supName')?.value, $('#supEmail')?.value, $('#supPassword')?.value));
+  $('#loginBtn')?.addEventListener('click', ()=> login($('#loginEmail')?.value, $('#loginPassword')?.value));
+
+
+  $('#checkout')?.addEventListener('click', checkout);
+  $('#clearCart')?.addEventListener('click', ()=> { DB.cart=[]; renderCart(); toast('Cart cleared'); });
+
+
+  $('#logoutAdmin')?.addEventListener('click', ()=>{
+    DB.current=null; updateUserPill();
+    const p=$('#adminPanel'); if (p) p.style.display='none';
+    toast('Logged out');
+    location.hash='#home';
+    show('home');
+  });
+  $('#addProduct')?.addEventListener('click', async ()=>{
+    const name=$('#pName')?.value?.trim(), price=+($('#pPrice')?.value||0), type=$('#pType')?.value?.trim(), stock=$('#pStock')?.checked;
+    const file = $('#pImgFile')?.files?.[0];
+    if(!name||!price||!type) return toast('Please enter name, price and type');
+    const readFileAsDataURL = (file)=> new Promise((resolve,reject)=>{
+      const fr=new FileReader(); fr.onload=e=>resolve(e.target.result); fr.onerror=reject; fr.readAsDataURL(file);
+    });
+    let img = '';
+    if (file) { try { img = await readFileAsDataURL(file); } catch { toast('Could not read image file'); } }
+    DB.products=[...DB.products, {id:randomId(), name, price, type, img, stock:!!stock, featured:false}];
+    renderAll(); toast('Product added');
+    if ($('#pName')) $('#pName').value='';
+    if ($('#pPrice')) $('#pPrice').value='';
+    if ($('#pType')) $('#pType').value='';
+    if ($('#pImgFile')) $('#pImgFile').value='';
+    if ($('#pStock')) $('#pStock').checked=true;
+  });
+  $('#addReview')?.addEventListener('click', async ()=>{
+    const a=$('#rAuthor')?.value?.trim(), t=$('#rText')?.value?.trim(), s=+($('#rStars')?.value||5);
+    if(!a||!t||!s) return toast('Fill review fields');
+    const file=$('#rImgFile')?.files?.[0];
+    const readFileAsDataURL = (file)=> new Promise((resolve,reject)=>{
+      const fr=new FileReader(); fr.onload=e=>resolve(e.target.result); fr.onerror=reject; fr.readAsDataURL(file);
+    });
+    let img=null; if (file) { try { img = await readFileAsDataURL(file); } catch {} }
+    DB.reviews=[...DB.reviews, {id:randomId(), author:a, text:t, stars:Math.max(1,Math.min(5,s)), img}];
+    renderAll(); toast('Review added');
+    if ($('#rAuthor')) $('#rAuthor').value='';
+    if ($('#rText')) $('#rText').value='';
+    if ($('#rStars')) $('#rStars').value=5;
+    if ($('#rImgFile')) $('#rImgFile').value='';
+  });
+  $('#exportCSV')?.addEventListener('click', ()=>{
+    const rows = [['OrderID','Customer','Email','Phone','Address','Total','Items','Date'],
+      ...DB.orders.map(o=> [
+        o.id, o.name, o.email, o.phone, o.address, o.total,
+        o.items.map(it=>{const p=DB.products.find(x=>x.id===it.id); return `${p?.name} x${it.qty}`}).join('; '),
+        new Date(o.time).toISOString()
+      ])
+    ];
+    const csv = rows.map(r=> r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv],{type:'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download='orders.csv'; a.click(); URL.revokeObjectURL(url);
+  });
+
+
+  renderAll();
+  updateUserPill();
+  const y = $('#year'); if (y) y.textContent = new Date().getFullYear();
+  const init = (location.hash.replace('#','')||'home');
+  show(routes.includes(init)? init : 'home');
+
+  
+  try { if (window.AOS) AOS.init({ duration:700, once:true, offset:50 }); } catch(e){}
+  try {
+    if (window.gsap) {
+      gsap.from('.logo-badge', {y:-8, scale:.9, duration:.6, ease:'back.out(2)'});
+      gsap.from('#nav a', {x:-10, opacity:0, duration:.5, stagger:.05, delay:.1});
+      gsap.from('.hero .chip', {y:10, opacity:0, duration:.5, delay:.2});
+    }
+  } catch(e){}
+});
+
+const renderAll = () => {
+  renderProducts('trendingGrid', p=>p.featured);
+  applySearch();
+  renderCart();
+  renderReviews();
+  if (window.AOS?.refresh) AOS.refresh();
+};
+
+const setWhatsApp = () => {
+  const msg = encodeURIComponent('Hello Mikun! I want to order hair booster/growth oils.');
+  const phone = '2348088477680';
+  const a = $('#whatsappBtn'); if (a) a.href = `https://wa.me/${phone}?text=${msg}`;
+};
+setWhatsApp();
+</script>
+<!-- EmailJS CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+<script>
+// =======================
+//  INITIALIZE EMAILJS
+// =======================
+document.addEventListener("DOMContentLoaded", function () {
+  emailjs.init({
+    publicKey: "r1a51ONa7E564q-_J", // <-- replace
+  });
+});
+
+// =======================
+//  SEND ORDER EMAIL
+// =======================
+function sendOrderEmail(order) {
+  if (!window.emailjs) return;
+
+  const templateParams = {
+    order_id: order.id,
+    amount: `₦${order.total.toLocaleString()}`,
+    customer_name: order.name,
+    customer_email: order.email,
+    phone: order.phone,
+    address: order.address,
+    items: order.items
+      .map((it) => {
+        const p = DB.products.find((x) => x.id === it.id);
+        return `${p?.name} x${it.qty}`;
+      })
+      .join(", "),
+    notes: order.notes || "-",
+  };
+
+  emailjs
+    .send("service_d9rw1md", "template_oz1o818", templateParams)
+    .then(() => {
+      console.log("EmailJS: Receipt sent successfully");
+    })
+    .catch((err) => {
+      console.error("EmailJS Error:", err);
+    });
+}
+</script>
+
+
+</body>
+</html>
